@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2c80a6">
+  <meta name="description" content="日本全国の実地図で線路と駅をつくり、路線・ダイヤを設定する鉄道経営シミュレーション。Railway Canvasの独立実装クローン。">
+  <title>Railway Canvas Clone</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./platform-controls.css">
+  <link rel="stylesheet" href="./workbench.css">
+</head>
+<body>
+  <main id="world" aria-label="鉄道建設ゲーム">
+      <header id="game-header" aria-label="経営とゲーム内時刻">
+        <div class="game-brand"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M9 3v22M19 3v22M7 7h14M7 14h14M7 21h14" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Railway Canvas</span></div>
+        <div class="balance"><span>資金</span><strong id="money">¥100,000,000,000</strong><span id="unlimited-badge" hidden>無制限</span></div>
+        <div class="clock-controls"><time id="game-time">2026/01/01 06:00:00</time><div class="clock-buttons" aria-label="時間の進み方"><button id="clock-pause" type="button" title="一時停止・再開（Space）" aria-label="運行を再開"><span id="clock-state-label">再開</span></button><button type="button" data-speed="1" aria-pressed="false">1×</button><button type="button" data-speed="10" aria-pressed="false">10×</button><button type="button" data-speed="60" aria-pressed="false">60×</button><button type="button" data-speed="300" aria-pressed="false">300×</button></div><details id="clock-custom"><summary title="時間の進み方を数値で指定">速度</summary><div><label for="game-speed">現実1秒あたりのゲーム内秒数</label><input id="game-speed" type="number" min="0" max="86400" step="any" value="0" aria-label="現実1秒あたりのゲーム内秒数"><small>0で一時停止・最大86,400秒</small></div></details></div>
+        <button id="panel-toggle" type="button" aria-expanded="true" aria-controls="controls-pane" title="操作パネルの表示切替"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="1"/><path d="M12 4v12"/></svg><span>パネル</span></button>
+      </header>
+      <nav class="main-tabs" aria-label="操作モード">
+        <button data-tab="build" class="active" aria-pressed="true" title="敷設：線路 T / 駅 S"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v18M16 3v18M6 6h12M6 12h12M6 18h12"/></svg><span>敷設</span></button>
+        <button data-tab="route" aria-pressed="false" title="路線とダイヤ（L）"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h3M18 15.5V14"/></svg><span>路線</span></button>
+        <button data-tab="save" aria-pressed="false" title="セーブと読込"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l3 3v15H4V3h1ZM8 3v6h8V3M8 21v-7h8v7"/></svg><span>セーブ</span></button>
+        <button data-tab="settings" aria-pressed="false" title="設定と操作ガイド"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg><span>設定</span></button>
+      </nav>
+    <section id="map-pane" aria-label="全国の鉄道網・建設マップ">
+      <div id="map-content" tabindex="0" aria-label="地図。ドラッグで移動、ホイールで拡大縮小、クリックで敷設操作。"></div>
+      <div class="map-tools">
+        <div id="layer-menu" class="layer-menu" hidden role="group" aria-label="地図の種類">
+          <button data-layer="standard" class="layer-choice selected"><span class="map-swatch standard"></span><span>OpenStreetMap</span><span class="choice-check">✓</span></button>
+          <button data-layer="satellite" class="layer-choice"><span class="map-swatch satellite"></span><span>衛星・航空写真</span><span class="choice-check"></span></button>
+          <button data-layer="relief" class="layer-choice"><span class="map-swatch relief"></span><span>標高図（地理院）</span><span class="choice-check"></span></button>
+          <button data-layer="blank" class="layer-choice"><span class="map-swatch blank"></span><span>白紙</span><span class="choice-check"></span></button>
+          <button id="population-layer-toggle" class="layer-choice population-choice" aria-pressed="false"><span class="map-swatch heatmap"></span><span>人口ヒートマップ</span><span class="choice-check"></span></button>
+        </div>
+        <button id="map-layer-toggle" class="layer-toggle" aria-label="地図の種類" aria-expanded="false" title="地図の種類">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 4 13 8-13 8L3 12 16 4Z" fill="#d4dde2" stroke="currentColor" stroke-width="1.5"/><path d="m3 16 13 8 13-8M3 21l13 8 13-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>地図</span>
+        </button>
+        <button id="grade-toggle" class="grade-toggle" type="button" aria-pressed="false" aria-label="2点間の勾配測定" title="2点間の勾配測定"><b aria-hidden="true">‰</b><span>勾配</span></button>
+      </div>
+      <div id="map-hint" class="map-hint">地図をクリックして計画線を描き、「敷設」で建設</div>
+      <div id="map-coordinates" class="map-coordinates" aria-hidden="true"></div>
+      <div class="track-legend" aria-label="線路の凡例"><span><i class="legend-single"></i>単線</span><span><i class="legend-double"></i>複線</span><span><i class="legend-existing"></i>既存線</span></div>
+      <div id="population-legend" class="population-legend" hidden><strong>人口ヒートマップ</strong><span>WorldPop 2020 · 約1kmメッシュの推計人口</span><div class="population-gradient"></div><div class="population-ticks"><span>少</span><span>100</span><span>1,000</span><span>10,000人+</span></div><small id="population-data-status">2020年の推計値です</small></div>
+      <section id="grade-panel" class="grade-panel" aria-label="勾配の測定結果" hidden><div class="grade-panel-heading"><strong>2点間の勾配</strong><button id="grade-close" type="button" aria-label="勾配測定を終了">×</button></div><p id="grade-status" role="status">地図上で始点A・終点Bをクリックしてください。</p><output id="grade-value" hidden></output><p id="grade-detail"></p><div class="grade-panel-actions"><button id="grade-reset" type="button">測り直す</button><a href="https://maps.gsi.go.jp/development/elevation_s.html" target="_blank" rel="noreferrer">標高：国土地理院</a></div><small>地表の2点を結ぶ平均勾配です。線路の高さ・途中の起伏は含みません。</small></section>
+      <div class="map-credit"><span id="base-credit">地図 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a></span><span> · 鉄道路線：<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2025.html" target="_blank" rel="noreferrer">国土交通省 国土数値情報 N02-25</a> · <a href="./credits.html" target="_blank">データ出典</a></span></div>
+    </section>
+    <aside id="controls-pane" aria-label="鉄道建設と運行設定">
+      <header class="workbench-header"><span id="workbench-section">敷設 / 線路</span><h1 id="workbench-heading">線路を敷く</h1><p id="workbench-description">描く → 調整する → 確定する</p></header>
+      <div id="message" role="status" hidden></div>
+      <div id="panel-scroll">
+        <section id="panel-build">
+          <div class="segment build-modes" aria-label="敷設対象"><button data-build="track" class="active" aria-pressed="true">線路</button><button data-build="station" aria-pressed="false">駅</button></div>
+          <div id="construction-overview" class="construction-overview" role="status" hidden></div>
+          <div id="panel-track">
+            <div class="segment track-interactions" aria-label="線路の操作"><button data-track-mode="draw" class="active" aria-pressed="true">新しく描く</button><button data-track-mode="edit" aria-pressed="false">選択・編集</button></div>
+            <div class="button-row track-history" aria-label="線路編集の履歴"><button id="track-undo" type="button" disabled title="元に戻す（Ctrl+Z）">↶ 元に戻す</button><button id="track-redo" type="button" disabled title="やり直す（Ctrl+Y）">↷ やり直す</button></div>
+            <div id="track-selection" class="track-selection" hidden><p id="track-selection-status" role="status">線を選択して編集・削除できます</p><button id="track-delete" type="button" disabled>この下書きを削除</button></div>
+            <div class="segment track-types" aria-label="線路の種類"><button data-track="single" aria-pressed="false">単線</button><button data-track="double" class="active" aria-pressed="true">複線</button><button data-track="crossover" aria-pressed="false">渡線</button><button data-track="scissors" aria-pressed="false">両渡線</button></div>
+            <div id="curve-controls"><label class="field-label">曲線モード</label><div class="segment curve-modes" aria-label="曲線モード"><button data-curve="tangent" class="active" aria-pressed="true">接線モード</button><button data-curve="point" aria-pressed="false">通過点モード</button></div><p id="curve-instruction" class="instruction">中間の点で接線と曲がり方を決めます。</p><label class="check-field curve-guide-toggle"><input id="curve-guides" type="checkbox" checked><span>予測線・接線ガイドを表示</span></label></div>
+            <div id="track-draft" class="track-draft" role="status" hidden><strong id="track-draft-status">下書きを編集中</strong><p>Escで区切っても下書きは残ります。</p></div>
+            <section id="track-draft-list-section" class="track-draft-list-section" hidden><h3>下書きの区間</h3><p class="instruction">区間を選ぶと、点とハンドルをドラッグして編集できます。</p><div id="track-draft-list" aria-label="下書きの区間一覧"></div></section>
+            <details class="tool-details"><summary>建設費の内訳</summary><div class="cost-card" aria-label="計画線の建設費"><dl><div><dt>線路工事費</dt><dd id="track-construction">¥0</dd></div><div><dt>土地取得費</dt><dd id="track-land">¥0</dd></div><div class="cost-total"><dt>合計</dt><dd id="track-total">¥0</dd></div></dl></div></details>
+            <details class="tool-details"><summary>操作と接続のヒント</summary><p id="track-instruction" class="instruction">地図をクリックして計画線を描きます。点を再クリックでその点を取消、右クリックで末尾から1点ずつ戻せます。</p><p id="existing-network-status" class="instruction">既存鉄道の接続データを読み込んでいます…</p><div class="shortcut-list"><span>点を戻す<kbd>右クリック</kbd></span><span>区間を区切る<kbd>Esc</kbd></span><span>元に戻す<kbd>Ctrl Z</kbd></span><span>線路の選択<kbd>V</kbd></span></div></details>
+            <div id="plan-meta" class="plan-meta" hidden></div>
+          </div>
+          <div id="panel-station" hidden>
+            <div class="segment station-interactions" aria-label="駅の操作"><button data-station-mode="place" class="active" aria-pressed="true">新しく置く</button><button data-station-mode="edit" aria-pressed="false">選択・移動</button></div>
+            <div class="button-row track-history" aria-label="建設計画の履歴"><button id="station-undo" type="button" disabled title="元に戻す（Ctrl+Z）">↶ 元に戻す</button><button id="station-redo" type="button" disabled title="やり直す（Ctrl+Y）">↷ やり直す</button></div>
+            <h2 class="panel-subtitle">配置方法</h2>
+            <div class="segment station-placement" aria-label="駅の配置方法"><button data-station-placement="free" class="active" aria-pressed="true">駅を先に設置</button><button data-station-placement="track" aria-pressed="false">線路上に設置</button></div>
+            <div class="station-basics"><label class="field">駅の構成<select id="station-layout" aria-label="駅の構成"></select></label><label class="field">ホーム対応両数<select id="station-platform" aria-label="ホーム対応両数"></select></label></div>
+            <label id="station-host-platform-field" class="field" hidden>既存線に合わせる番線<select id="station-host-platform" aria-label="既存線に合わせる番線"></select><span id="station-host-platform-help" class="instruction">選んだ番線を既存線に重ねて配置します。</span></label>
+            <p id="station-host-status" class="station-host-status" role="status" hidden></p>
+            <details class="tool-details station-diagram-details"><summary>構内の配線図</summary><div id="station-layout-diagram" class="station-layout-diagram" role="img" aria-label="駅の配線図"></div></details>
+            <div id="station-orientation"><label class="field">駅の向き <output id="station-bearing-value" for="station-bearing">0°</output><input id="station-bearing" type="range" min="0" max="175" step="5" value="0" aria-label="駅の向き"></label><div class="bearing-actions"><button id="station-rotate" type="button">45°回転</button><span>回転してもA側／B側の対応は同じです</span></div><p class="instruction">地図上で右ドラッグ（左右）または Shift＋ホイールで5°ずつ回転できます。</p></div>
+            <details id="station-wiring-options" class="tool-details"><summary>番線・接続・進行方向<span id="station-wiring-summary">番線ごとに設定</span></summary><label class="field">構内の配線<select id="station-wiring-mode" aria-label="構内の配線"><option value="platforms">番線ごとに設定</option><option value="merged">両端ですべて合流</option></select></label><div id="station-track-configs"></div></details>
+            <p id="station-preview-error" class="form-error" role="status" hidden></p>
+            <details id="station-cost-preview" class="tool-details"><summary>建設費の内訳</summary><div class="cost-card"><h3>駅の設置費用（<span id="platform-metres">160</span>mホーム）</h3><dl><div><dt>駅本体工事費</dt><dd id="station-base-cost">¥100,000,000</dd></div><div><dt>ホーム工事費（<span id="platform-cars">8</span>両対応）</dt><dd id="platform-cost"></dd></div><div><dt>構内線路工事費</dt><dd id="station-track-cost"></dd></div><div class="cost-total"><dt>合計</dt><dd id="station-total"></dd></div></dl></div></details>
+            <div id="existing-station-preview" class="cost-card" hidden><h3>既設駅の利用登録</h3><p id="existing-station-preview-name"></p><dl><div><dt>共有ホーム</dt><dd>20両対応</dd></div><div class="cost-total"><dt>建設費</dt><dd>¥0</dd></div></dl></div>
+            <details class="tool-details"><summary>駅の配置と接続のヒント</summary><p id="station-instruction" class="instruction">地図上をクリックして駅のドラフトを配置し、「まとめて敷設」で建設します。</p></details>
+            <div id="station-draft" class="station-draft" role="status" hidden><strong id="station-draft-status">駅のドラフト（未確定）</strong><p id="station-draft-description"></p></div>
+            <section id="station-draft-list-section" class="station-draft-list-section" hidden><h3>駅の下書き</h3><p class="instruction">選択して移動・構成変更。線路と一緒に敷設します。</p><div id="station-draft-list" aria-label="駅の下書き一覧"></div></section>
+            <details id="station-list-details" class="tool-details station-library"><summary>建設した駅 <span id="station-count" class="count"></span></summary><div id="station-list"></div></details>
+          </div>
+        </section>
+        <section id="panel-route" hidden>
+          <h2 class="panel-subtitle">停車駅を選ぶ</h2>
+          <div class="endpoints"><button id="route-start" class="endpoint" title="起点を選び直す"><span>起点</span><strong>未選択</strong></button><button id="route-end" class="endpoint" title="終点を選び直す"><span>終点</span><strong>未選択</strong></button></div>
+          <form id="route-form">
+            <div class="route-options"><label class="field name-field">路線名<input id="route-name" maxlength="48" placeholder="路線名" aria-label="路線名"></label><label class="field">車両両数<select id="route-cars" aria-label="車両両数"></select></label><label class="field">投入編成数<input id="route-fleet" type="number" min="1" max="99" value="1" required aria-label="投入編成数"></label></div>
+            <div class="two-columns"><label class="field">初電<input id="route-first" value="06:00" maxlength="5" inputmode="numeric" pattern="[0-2]?[0-9]:[0-5][0-9]" required aria-label="初電"></label><label class="field">終車<input id="route-last" value="24:00" placeholder="24:00" maxlength="5" inputmode="numeric" pattern="[0-2]?[0-9]:[0-5][0-9]" required aria-label="終車"></label></div>
+            <details id="route-platform-details" class="tool-details"><summary>使用する番線（往路・復路）</summary><p class="instruction">起終点・途中駅の使用番線を指定できます。「自動」は接続できる番線を選びます。経路に含めない駅は「自動」のままにしてください。</p><div id="route-platform-options"></div></details>
+            <button id="route-create" class="primary full-width" type="submit">路線・ダイヤを作成</button>
+          </form>
+          <p id="route-instruction" class="instruction">自作駅や既存の青い駅を2つクリックして、起点・終点を選択してください。既存線路を通る経路も利用できます。</p>
+          <h3 class="section-title">路線一覧 <span id="route-count" class="count"></span></h3><div id="route-list"></div>
+        </section>
+        <section id="panel-save" hidden>
+          <p class="panel-intro">進行状況は自動保存されます。名前を付けると、その枠を引き続き更新します。</p><p id="current-save-target" class="save-destination"></p>
+          <h3 class="section-title">名前付きセーブ</h3><p class="muted">このクローン専用の保存枠です。選択中の枠は自動更新されます。</p>
+          <form id="save-form"><label class="field">セーブ名<input id="save-name" maxlength="60" placeholder="新しいセーブの名前" required aria-label="セーブ名"></label><button class="primary full-width" type="submit">名前をつけてセーブ</button></form>
+          <h3 class="section-title">セーブ一覧</h3><div id="save-list"></div><button id="save-more" class="full-width" hidden>さらに表示</button>
+          <div class="save-tools"><button id="export-save">ファイルに書き出す</button><button id="import-save">ファイルを読み込む</button><input id="import-file" type="file" accept="application/json,.json" hidden></div>
+          <p class="muted small">元サイトのアカウントとは連携しません。別端末にはファイルまたは共有リンクで引き継げます。</p>
+          <div class="reset-section"><button id="save-reset" class="danger full-width">新規ゲーム / リセット</button><p class="muted">名前付きセーブを残して始めるか、保存枠も含めて全部リセットするか選べます。</p></div>
+          <div id="autosave-state" class="autosave-state">自動保存しています</div>
+        </section>
+        <section id="panel-settings" hidden>
+          <label class="check-field"><input id="settings-unlimited" type="checkbox"><strong>資金無制限</strong></label><p class="muted">資金不足を気にせず建設できます。一度有効にすると、このプレイ中は解除できません。</p>
+          <div class="reset-section"><h3 class="section-title">新規ゲーム</h3><p class="muted">線路・駅・路線・資金・日時を初期化して、最初から始められます。</p><button id="settings-new-game" class="full-width">新規ゲーム / リセット</button></div>
+          <details id="operation-guide" class="help-details"><summary>操作ガイド</summary><ol><li>敷設 → 線路で地図をクリックして下書きを描き、「まとめて敷設」で建設します。点の再クリックと右クリックで取り消せます。Escで区切っても下書きは残ります。</li><li>単線・複線の端点を青い既存線路に合わせると吸着し、接続できます。交差するだけでは接続しません。</li><li>敷設 → 駅で複数の下書きを追加し、「まとめて敷設」で建設します。線路上の配置では、既存線に合わせる番線も選べます。</li><li>路線で駅を2つ選び、両数・編成・初電・終車を設定します。番線の指定は詳細設定から行います。</li><li>上部の再開ボタンで時間が進みます。停止・再開はSpace、速度は1×・10×・60×・300×から選べます。</li></ol><div class="shortcut-list"><span>線路の敷設<kbd>T</kbd></span><span>駅の配置<kbd>S</kbd></span><span>線路の選択<kbd>V</kbd></span><span>路線の設定<kbd>L</kbd></span><span>停止 / 再開<kbd>Space</kbd></span><span>元に戻す<kbd>Ctrl Z</kbd></span></div><p>ドラッグで地図を移動、ホイール・ピンチで拡大縮小。駅は右ドラッグまたはShift＋ホイールで回転できます。</p><p>青い既存線路は双方向に利用できる共有設備です。紫の新幹線は接続対象外です。</p></details>
+          <details class="help-details"><summary>クローンについて・再現範囲</summary><p>Railway Canvasを独立実装したクローンです。公開UIの建設・駅・路線・自動ダイヤ・収支・セーブを再現しています。</p><p>地価・利用者需要・走行時間は独自の近似計算です。元ゲームの全国OD・実在時刻表を用いた需要モデルと同一ではありません。</p><p>名前付きセーブはブラウザ保存、共有は発行時点の独立したコピーです。元サービスのアカウント保存は利用できません。</p><a href="./features.html" target="_blank">機能一覧・確認結果</a><br><a href="./credits.html" target="_blank">出典・ライセンス</a></details>
+        </section>
+      </div>
+      <section id="build-commit-bar" aria-label="建設の確定"><p id="construction-error" class="form-error" role="status" hidden></p><div class="commit-summary"><div><span id="commit-label">確定時の建設費</span><strong id="commit-cost">¥0</strong></div><span id="commit-status">下書きなし</span></div><div id="track-commit-controls" class="commit-actions"><button id="track-cancel" type="button" disabled>破棄</button><button id="track-build" class="primary" type="button" disabled>まとめて敷設</button></div><div id="station-commit-controls" class="commit-actions" hidden><button id="station-draft-cancel" type="button" disabled>破棄</button><button id="station-confirm" class="primary" type="button" disabled>まとめて敷設</button></div></section>
+      <footer class="app-footer"><span id="save-indicator" role="status">自動保存</span><div class="app-footer-actions"><button id="new-game-menu" class="new-game-shortcut" title="新しいゲームを開始">新規ゲーム</button><button id="help-button" title="操作ガイドを開く" aria-label="操作ガイド">?</button></div></footer>
+    </aside>
+  </main>
+  <dialog id="app-dialog"><form method="dialog" id="dialog-form"><h2 id="dialog-title"></h2><p id="dialog-body"></p><input id="dialog-input" hidden maxlength="60" aria-label="入力"><textarea id="dialog-share" hidden readonly rows="4" aria-label="共有リンク"></textarea><div class="dialog-actions"><button id="dialog-cancel" value="cancel">取消</button><button id="dialog-confirm" value="confirm" class="primary">実行</button></div></form></dialog>
+  <dialog id="new-game-dialog" aria-labelledby="new-game-title"><form id="new-game-form"><h2 id="new-game-title">新しいゲームを始める</h2><p>現在の線路・駅・路線をリセットし、所持金1000億円・2026年1月1日6時から始めます。資金無制限も解除します。</p><label class="check-field clear-all-label"><input id="clear-named-saves" type="checkbox"><strong>名前付きセーブもすべて削除する</strong></label><p id="new-game-description" class="muted"></p><p id="new-game-error" class="form-error" role="alert" hidden></p><div class="dialog-actions"><button id="new-game-cancel" type="button">取消</button><button id="new-game-confirm" class="primary" type="submit">新規ゲームを開始</button></div></form></dialog>
+  <dialog id="station-wiring-dialog" aria-labelledby="station-wiring-title"><form id="station-wiring-form"><h2 id="station-wiring-title">番線の配線</h2><p class="instruction">専用口・共通口へ、地図上で外部の線路を接続します。配線の変更で接続口が移る場合は線路の接続を見直してください。運行中の路線が成立しなくなる変更は保存できません。</p><label class="field">構内の配線<select id="edit-wiring-mode" aria-label="編集する構内の配線"><option value="platforms">番線ごとに設定</option><option value="merged">両端ですべて合流</option></select></label><div id="edit-track-configs"></div><p id="station-wiring-error" class="form-error" role="alert" hidden></p><div class="dialog-actions"><button id="station-wiring-cancel" type="button">取消</button><button class="primary" type="submit">配線を保存</button></div></form></dialog>
+  <dialog id="route-platform-dialog" aria-labelledby="route-platform-title"><form id="route-platform-form"><h2 id="route-platform-title">路線の使用番線</h2><p class="instruction">往路・復路ごとに使用する番線を選びます。接続できない番線の組み合わせは保存できません。</p><div id="edit-route-platforms"></div><p id="route-platform-error" class="form-error" role="alert" hidden></p><div class="dialog-actions"><button id="route-platform-cancel" type="button">取消</button><button class="primary" type="submit">使用番線を保存</button></div></form></dialog>
+  <noscript>このゲームを使用するにはJavaScriptを有効にしてください。</noscript>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

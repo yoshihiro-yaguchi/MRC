@@ -1,0 +1,20 @@
+.wiring-table,.platform-choice-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 16px;font-size:11px}
+.track-draft{padding:10px 12px;margin:10px 0 14px;border:1px solid #cedfe9;border-radius:5px;background:#f1f7fb;color:#3c6479}.track-draft strong{font-size:12px;font-weight:600}.track-draft p{font-size:10px;line-height:1.7;margin:5px 0 0;color:#658092}
+.station-draft{padding:12px;margin:12px 0 16px;border:1px solid #b9d7d3;border-radius:5px;background:#f1f8f6;color:#315f60}.station-draft strong{font-size:12px;font-weight:600}.station-draft p{font-size:10px;line-height:1.7;margin:6px 0;color:#628180}.station-draft .button-row{margin:10px 0 0}
+.wiring-table th,.platform-choice-table th{text-align:left;color:#627e8c;font-size:10px;font-weight:500;line-height:1.6;padding:5px 3px;border-bottom:1px solid #dbe4e8}
+.wiring-table td,.platform-choice-table td{padding:5px 3px;border-bottom:1px solid #edf1f3;vertical-align:middle}
+.wiring-table th:first-child{width:28px}.wiring-table td:first-child{text-align:center;font-weight:600;color:#087f8c}
+.wiring-table select,.platform-choice-table select{font-size:10px;padding:5px 3px;min-height:30px}
+.platform-choice-table th:first-child{width:42%}.platform-choice-table td:first-child{overflow-wrap:anywhere;line-height:1.6}
+.wiring-help{margin:0 0 8px}.row-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}.row-actions button{white-space:nowrap;font-size:10px}
+.map-swatch.relief{background:linear-gradient(125deg,#cee6bb 10%,#71b98b 30%,#e7eab4 50%,#eccb91 70%,#bd9279 85%,#f2f0ed)}
+.grade-toggle{width:44px;height:44px;margin-left:6px;vertical-align:bottom;background:#fffffff5;box-shadow:0 2px 7px #233f4d26;font-size:22px;color:#76569e}.grade-toggle[aria-pressed=true]{background:#f0e8fa;border-color:#a582c4;color:#5e377e}
+.grade-panel{position:absolute;z-index:9;right:12px;bottom:36px;width:285px;padding:12px;background:#fffffff7;border:1px solid #dcd2e7;border-radius:6px;box-shadow:0 3px 12px #442b6320;color:#4e4261}
+.grade-panel-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}.grade-panel-heading button{min-height:22px;padding:0 5px;border:0;font-size:18px}.grade-panel p{font-size:11px;line-height:1.7;margin-bottom:7px}.grade-panel output{font-size:24px;font-weight:650;display:block;margin:10px 0;color:#704999}.grade-panel small{font-size:9px;color:#8a8294;line-height:1.6;display:block;margin-top:9px}.grade-panel-actions{display:flex;align-items:center;justify-content:space-between;font-size:9px}.grade-panel-actions button{font-size:10px;min-height:26px;padding:4px 8px}
+@media(max-width:740px){.grade-panel{width:250px;bottom:30px}.grade-toggle{width:40px;height:40px;margin-left:4px}}
+.station-info,.route-info{min-width:0;flex:1}.platform-meta{font-size:10px;line-height:1.7;white-space:normal;overflow-wrap:anywhere;margin-top:3px;color:#397987}
+#station-wiring-dialog,#route-platform-dialog{width:min(680px,calc(100vw - 28px));max-width:680px;max-height:90dvh;overflow-y:auto}
+#station-wiring-dialog .wiring-table select{font-size:11px;padding:6px}#route-platform-details{margin:8px 0 14px}#route-platform-options{max-height:330px;overflow-y:auto}
+#station-preview-error{margin-bottom:12px}#station-wiring-options{margin:5px 0 14px;border-top:1px solid #e5ecef;padding-top:12px}
+@media(max-width:740px){.wiring-table{font-size:10px}.wiring-table select{font-size:9px}.wiring-table th{font-size:9px}.row-actions{gap:4px}}
+.diagram-host-track{color:#267ac7;font-weight:700;background:#267ac712;border-radius:2px}.diagram-host-track:after{border-top-color:#267ac7;border-top-width:3px}

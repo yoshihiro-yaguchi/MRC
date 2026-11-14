@@ -1,0 +1,44 @@
+{
+  "geography": {
+    "source": "MLIT National Land Numerical Information N02-25 (2025) via publicly distributed Railway Canvas geography pack",
+    "sourceUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2025.html",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "stationMetadataSource": "TimetableTrip/RailwayData/runtime_shards",
+    "transformation": "Decoded WRA1 geographic coordinates to WGS84 GeoJSON, rounded to six decimals; application source not included.",
+    "retrievedAt": "2026-11-13",
+    "lineCount": 21933,
+    "stationCount": 9060
+  },
+  "land": {
+    "version": 1,
+    "year": 2026,
+    "unit": "JPY_per_square_metre",
+    "source": "MLIT Japan National Land Numerical Information L01 2026 standard land appraisal",
+    "sourceUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/L01/L01-26/L01-26_GML.zip",
+    "sourceLicense": "CC-BY-4.0",
+    "coordinateScale": 100000,
+    "appraisedNotTransactional": true,
+    "transformation": "Extracted public CC BY 4.0 factual land-appraisal dataset from distribution container. Coordinate and price values unchanged.",
+    "pointsCount": 25565
+  },
+  "population": {
+    "version": 1,
+    "type": "estimated-resident-population",
+    "year": 2020,
+    "unit": "people-per-1km-cell",
+    "source": "WorldPop JPN ppp 2020 1km Aggregated / DOI 10.5258/SOTON/WP00670",
+    "sourceUrl": "https://data.worldpop.org/GIS/Population/Global_2000_2020_1km/2020/JPN/",
+    "license": "CC BY 4.0",
+    "coordinateScale": 10000,
+    "populationScale": 10,
+    "totalPopulation": 128858379,
+    "cellsCount": 564518
+  },
+  "placenames": {
+    "source": "Geolonia japanese-addresses (CC BY 4.0)",
+    "pointsCount": 277186,
+    "namesCount": 142535,
+    "coordinateScale": 100000
+  }
+}

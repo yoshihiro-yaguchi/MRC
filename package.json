@@ -1,0 +1,13 @@
+{
+  "name": "railway-canvas-clone",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An independently implemented Railway Canvas clone with Japanese railway geographic data.",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check server.mjs && node --check elevation-server.mjs && node --check dist/main.js && node --check dist/map.js && node --check dist/engine.js && node --check dist/persistence.js && node --check dist/existing-network.js && node --check dist/population-layer.js && node --check dist/elevation.js && node --check dist/editor-history.js && node --check dist/track-edit-state.js && node --check dist/game-clock-controls.js"
+  }
+}

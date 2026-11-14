@@ -1,0 +1,333 @@
+/* Map-first construction workbench. The map keeps its own blue/green rail colours. */
+:root {
+  --ink: #26312f;
+  --muted: #65706c;
+  --line: #d8dcd5;
+  --pale: #f2f3ed;
+  --blue: #32665c;
+  --green: #32665c;
+  --paper: #fafbf6;
+  --accent: #c3a05b;
+  font-family: "Yu Gothic UI", "Noto Sans JP", Meiryo, sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  background: #e7ebe1;
+}
+button, input, select, textarea { border-radius: 3px; }
+button { min-height: 36px; transition: background-color .12s, border-color .12s; }
+button:hover:not(:disabled) { background: #e9eee5; border-color: #a3b0a2; }
+button:disabled { opacity: .4; }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid #7a9f82; outline-offset: 2px; }
+input, select, textarea { min-height: 36px; padding: 8px 9px; background: #fff; border-color: #cbd1c7; }
+select { cursor: pointer; }
+input[type=checkbox] { width: 16px; height: 16px; accent-color: #32665c; }
+p { line-height: 1.75; }
+.primary { color: #fff; background: #32665c; border-color: #32665c; }
+.primary:hover:not(:disabled) { background: #28584e; border-color: #28584e; }
+.danger { color: #a34d3a; }
+
+#world { grid-template-columns: minmax(0, 1fr) 376px; grid-template-rows: 52px minmax(0, 1fr); grid-template-areas: "hud hud" "map controls"; position: relative; }
+#game-header { grid-area: hud; height: 52px; min-height: 52px; padding: 0 16px; gap: 22px; color: #e7eae2; background: #26322f; border-bottom: 1px solid #17221e; z-index: 30; justify-content: flex-start; }
+.game-brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 15px; letter-spacing: -.2px; flex-shrink: 0; }
+.game-brand svg { width: 26px; height: 28px; color: #d6bb7f; }
+.balance { gap: 8px; padding-left: 22px; border-left: 1px solid #ffffff26; }
+.balance > span:first-child { font-size: 11px; color: #aebcb3; }
+.balance strong { font-size: 16px; font-weight: 600; letter-spacing: .1px; }
+#unlimited-badge { font-size: 10px; background: #35473e; color: #d2dfce; border: 1px solid #597160; padding: 2px 5px; }
+.clock-controls { gap: 12px; margin-left: auto; color: #cbd5cc; }
+.clock-controls time { margin: 0; font: 12px "Consolas", "SFMono-Regular", monospace; letter-spacing: .15px; }
+.clock-buttons { display: flex; border: 1px solid #59685b; border-radius: 3px; overflow: hidden; }
+.clock-buttons button { min-height: 29px; padding: 4px 9px; background: transparent; border: 0; border-left: 1px solid #435448; color: #becdc0; border-radius: 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+.clock-buttons button:first-child { border-left: 0; }
+.clock-buttons button:hover:not(:disabled) { background: #405247; }
+.clock-buttons button.active { color: #24322b; background: #d8c08a; }
+#clock-pause { display: flex; align-items: center; gap: 7px; color: #edf2e5; min-width: 67px; }
+#clock-pause:before { content: ""; display: block; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 7px solid currentColor; }
+#clock-pause.playing:before { height: 10px; width: 7px; border: 0; background: linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px, currentColor 5px); }
+#clock-custom { position: relative; font-size: 11px; }
+#clock-custom summary { cursor: pointer; padding: 6px 0; color: #b4c6b7; }
+#clock-custom > div { position: absolute; right: 0; top: 34px; width: 240px; padding: 14px; background: #fafbf6; border: 1px solid #c4cdc0; box-shadow: 0 4px 14px #18291b29; color: #354a3d; border-radius: 3px; }
+#clock-custom label { display: block; font-size: 12px; line-height: 1.6; white-space: normal; margin-bottom: 9px; }
+#clock-custom small { display: block; font-size: 11px; margin-top: 8px; color: #657364; }
+#game-speed { width: 100%; min-height: 34px; height: 34px; text-align: left; }
+#panel-toggle { display: flex; align-items: center; gap: 6px; border-color: #56675a; color: #c5d2c6; background: transparent; min-height: 30px; padding: 4px 7px; font-size: 11px; }
+#panel-toggle svg { height: 18px; width: 18px; }
+#panel-toggle:hover { background: #405247; }
+
+#map-pane { grid-area: map; background: #e7ebe1; }
+#map-content { width: 100%; }
+.main-tabs { position: absolute; top: 70px; left: 12px; z-index: 14; display: flex; flex-direction: column; width: 62px; height: auto; padding: 5px; gap: 3px; border: 1px solid #bfc9bb; border-radius: 4px; background: #fafbf6f5; box-shadow: 0 2px 7px #2734221c; }
+.main-tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 57px; min-height: 57px; padding: 7px 3px; border: 1px solid transparent; border-radius: 2px; color: #536356; background: transparent; font-size: 11px; }
+.main-tabs svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.main-tabs button.active { background: #e8eddf; color: #2f5945; border: 1px solid #b0c09f; box-shadow: inset 3px 0 #698659; }
+.main-tabs button:hover { background: #e8eddf!important; }
+.main-tabs button.active:hover { border-color: #a5b895; }
+.track-legend { top: 19px; left: 88px; padding: 8px 10px; border-color: #c7d0c2; background: #fafbf6ed; color: #4f6356; font-size: 10px; box-shadow: none; }
+.population-legend { top: 18px; right: 18px; border-color: #c9d1c1; background: #fafbf6f2; color: #435f49; box-shadow: none; }
+.map-coordinates { top: 106px; left: 88px; color: #4f6651; background: #fafbf6e8; }
+.map-tools { left: 12px; bottom: 28px; display: flex; align-items: flex-end; gap: 5px; }
+.layer-toggle, .grade-toggle { min-width: 52px; width: 52px; height: 59px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 7px; gap: 3px; background: #fafbf6f5; border: 1px solid #bfc9bb; border-radius: 3px; color: #556a55; margin: 0; box-shadow: 0 1px 5px #27342220; }
+.layer-toggle svg { width: 25px; height: 25px; }
+.layer-toggle span, .grade-toggle span { font-size: 10px; line-height: 1; }
+.grade-toggle b { font-size: 24px; font-weight: 500; line-height: 25px; }
+.grade-toggle[aria-pressed=true] { background: #e3e8f0; border-color: #8796ab; color: #4f6583; }
+.layer-menu { position: absolute; bottom: 63px; left: 0; width: 225px; margin: 0; padding: 7px; border-color: #bcc8b9; border-radius: 3px; background: #fafbf6; box-shadow: 0 4px 14px #27342222; }
+.layer-choice { gap: 9px; font-size: 12px; min-height: 39px; border-radius: 2px; }
+.layer-choice.selected { background: #e6edde; }
+.choice-check { color: #42644a; }
+.map-hint { bottom: 27px; max-width: min(730px, calc(100% - 290px)); padding: 10px 16px; border: 1px solid #b9c7b2; border-radius: 3px; background: #fafbf6f5; box-shadow: 0 1px 5px #2734221c; color: #425443; font-size: 12px; line-height: 1.6; text-align: left; }
+.map-credit { font-size: 8px; color: #596d59; background: #fafbf6dc; padding: 4px 6px; max-width: calc(100% - 120px); }
+.grade-panel { border-radius: 3px; border-color: #a5afbd; color: #42536d; background: #fafbf8f8; right: 16px; bottom: 90px; box-shadow: 0 3px 12px #27342225; }
+
+#controls-pane { grid-area: controls; background: var(--paper); border-left: 1px solid #bdc7b6; }
+.workbench-header { padding: 17px 20px 14px; border-bottom: 1px solid #d8ded2; flex-shrink: 0; background: #f2f4ec; }
+.workbench-header > span { color: #6d7b65; font-size: 11px; line-height: 1.4; }
+.workbench-header h1 { font-size: 20px; font-weight: 650; letter-spacing: -.3px; margin: 5px 0 6px; line-height: 1.35; }
+.workbench-header p { font-size: 11px; color: #70806d; margin: 0; line-height: 1.6; }
+#panel-scroll { padding: 16px 18px 22px; scrollbar-color: #bfc8b8 transparent; }
+.panel-subtitle { font-size: 12px; font-weight: 600; color: #596b50; margin: 4px 0 8px; }
+.panel-intro { font-size: 12px; color: #62715a; margin-bottom: 16px; }
+.segment { gap: 3px; padding: 3px; border: 1px solid #d0d7c8; border-radius: 3px; background: #e9ede2; }
+.segment button { background: transparent; border: 1px solid transparent; min-height: 33px; font-size: 12px; color: #617157; }
+.segment button.active { background: #fafbf6; border-color: #abbda0; color: #294c32; box-shadow: 0 1px 2px #293e2020; }
+.segment button.active:hover { background: #f7f9f0; }
+.build-modes { margin-bottom: 14px; }
+.build-modes button { font-weight: 650; }
+.track-interactions { margin-bottom: 10px; }
+.station-interactions { grid-template-columns: 1fr 1fr; margin-bottom: 15px; }
+.construction-overview { border-left: 3px solid #bd9b50; background: #f5efdf; padding: 9px 11px; font-size: 12px; color: #816a39; margin-bottom: 13px; }
+.station-draft-list-section { border-top: 1px solid #d8dfcf; padding-top: 12px; margin: 12px 0; }
+.station-draft-list-section h3 { font-size: 12px; color: #596d4c; }
+.station-draft-list-section .instruction { font-size: 11px; margin: 5px 0 9px; }
+#station-draft-list { max-height: 190px; overflow: auto; display: grid; gap: 6px; }
+.station-draft-row { display: flex; gap: 6px; }
+.station-draft-row .draft-select { flex: 1; min-width: 0; }
+.station-draft-row .mini-button { color: #99634f; background: transparent; border-color: #dac8b6; }
+.track-history { margin: 0 0 18px; gap: 6px; }
+.track-history button { min-height: 31px; color: #66745e; border-color: #d8dfcf; background: transparent; font-size: 11px; }
+.track-types { margin: 0 0 16px; }
+#curve-controls { margin: 16px 0 18px; }
+.field-label, .field { font-size: 12px; color: #54644d; }
+.field { margin-bottom: 14px; gap: 7px; }
+.field input, .field select { font-size: 12px; color: #293c2a; }
+.curve-guide-toggle { margin: 10px 0; font-size: 12px; color: #54664f; }
+.instruction, .muted { font-size: 12px; color: #697461; line-height: 1.8; }
+#curve-instruction { font-size: 11px; color: #5d7053; margin-top: 9px; }
+.tool-details { border-top: 1px solid #d8dfcf; margin: 0; padding: 0; }
+.tool-details > summary { display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; min-height: 43px; padding: 11px 1px; font-size: 12px; font-weight: 550; color: #4d6048; }
+.tool-details > summary::-webkit-details-marker { display: none; }
+.tool-details > summary:before { content: ""; width: 5px; height: 5px; border-right: 1.5px solid #84907b; border-bottom: 1.5px solid #84907b; transform: rotate(-45deg); margin: 0 4px 0 1px; flex-shrink: 0; }
+.tool-details[open] > summary:before { transform: rotate(45deg); }
+.tool-details > summary > span { margin-left: auto; font-size: 10px; font-weight: 400; color: #849077; }
+.tool-details > .field { padding-top: 6px; }
+.tool-details p { margin: 4px 0 12px; }
+.cost-card { border: 0; background: #eef1e7; border-radius: 2px; padding: 12px; margin: 0 0 12px; }
+.cost-card dt { color: #738168; }
+.cost-card dd { color: #33492e; }
+.cost-card dl > div { font-size: 12px; margin-bottom: 10px; }
+.cost-card dl > .cost-total { border-color: #d3dbcb; }
+.cost-card h3 { font-size: 11px; color: #66785b; }
+.track-draft, .station-draft { background: #f7f0de; border: 1px solid #ddca96; border-left: 3px solid #bf9d51; border-radius: 2px; margin: 15px 0; padding: 10px 11px; color: #705b2b; }
+.track-draft p, .station-draft p { color: #8b7750; font-size: 11px; }
+.track-draft strong, .station-draft strong { font-size: 12px; }
+.track-draft-list-section { padding: 0; margin: 14px 0; border: 0; }
+.track-draft-list-section h3 { color: #536847; font-size: 12px; }
+.track-draft-list-section .instruction { font-size: 11px; margin: 6px 0 9px; }
+.draft-select { border-radius: 2px; font-size: 12px; padding: 8px 9px; min-height: 36px; border-color: #d2dacb; background: #f6f8f0; color: #53664b; }
+.draft-select.selected { border-color: #8ea47c; background: #e8efde; color: #35552c; }
+.track-selection { background: #edf1e5; border-color: #ccd6c0; border-radius: 2px; padding: 9px; }
+.track-selection p { font-size: 11px; color: #556a4a; }
+.track-selection button { color: #9c5945; font-size: 11px; min-height: 30px; }
+.plan-meta { color: #667c56; background: transparent; border-top: 1px solid #d8dfcf; border-radius: 0; padding: 10px 0; font-size: 11px; }
+.station-placement { margin-bottom: 18px; }
+.station-basics { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 10px; margin-bottom: 14px; }
+.station-basics .field { min-width: 0; margin: 0; }
+.station-diagram-details { margin-bottom: 12px; }
+.station-layout-diagram { border-radius: 2px; background: #edf1e6; border-color: #d6ddce; padding: 12px 14px; margin: 3px 0 15px; gap: 4px; }
+.diagram-track { height: 11px; line-height: 11px; font-size: 10px; }
+.diagram-platform { height: 14px; font-size: 9px; line-height: 12px; border-color: #afbbab; background: #cbd4c4; color: #66765d; }
+.diagram-host-track { background: #267ac71b; }
+.station-host-status { border: 0; border-left: 2px solid #7d9c72; border-radius: 0; padding: 7px 10px; background: #edf2e6; font-size: 11px; color: #637556; }
+#station-host-platform-help { font-size: 11px; margin: 0; color: #7a886f; line-height: 1.7; }
+#station-wiring-options { margin: 0; padding: 0; border-top-color: #d8dfcf; }
+.wiring-help { font-size: 11px; }
+.wiring-table { margin-bottom: 14px; }
+.wiring-table th, .platform-choice-table th { color: #6c7f5f; font-size: 10px; }
+.wiring-table td, .platform-choice-table td { border-color: #e0e5d8; padding: 5px 2px; }
+.wiring-table select, .platform-choice-table select { min-height: 33px; font-size: 10px; background: #fff; }
+.wiring-table select:disabled { color: #78906d; background: #e9eee2; border-color: #d8e0ce; opacity: .7; cursor: default; }
+.station-library { margin-top: 12px; }
+.station-row, .route-row, .save-row { background: transparent; border: 0; border-bottom: 1px solid #d9e0d0; border-radius: 0; padding: 12px 0; margin: 0; }
+.station-row:hover, .route-row:hover { background: #eff3e7; }
+.station-row { align-items: flex-start; }
+.station-name { border-color: transparent; min-height: 31px; font-size: 13px; padding: 5px; background: transparent; }
+.station-name:hover { border-color: #c8d5be; background: #fff; }
+.station-name:focus { border-color: #8ea67c; background: #fff; }
+.station-capacity { color: #76846c; font-size: 11px; line-height: 1.7; margin: 3px 0 0 5px; }
+.row-actions { gap: 5px; }
+.row-actions button { font-size: 10px; min-height: 29px; padding: 4px 6px; color: #6d7e5e; border-color: #d2dcc8; background: transparent; }
+.section-title { color: #516b40; font-size: 12px; font-weight: 600; margin-top: 20px; }
+.count { font-variant-numeric: tabular-nums; font-size: 11px; }
+.empty-state { font-size: 12px; color: #87917b; padding: 15px 0; }
+.endpoints { gap: 7px; margin: 0 0 19px; }
+.endpoint { position: relative; border: 1px dashed #b9c7ac; border-radius: 2px; background: #f3f6ed; min-height: 73px; padding: 11px; }
+.endpoint span { color: #819572; font-size: 11px; }
+.endpoint strong { font-size: 13px; color: #4f6940; }
+.endpoint.selected { border: 1px solid #8ba476; background: #e8f0dc; }
+.route-options { grid-template-columns: 1fr 1fr; gap: 8px; }
+.name-field { grid-column: 1 / -1; }
+.route-name { font-size: 13px; color: #3d5632; }
+.route-meta { color: #7c8a70; font-size: 11px; }
+.route-row.selected { background: #eaf1df; }
+#route-create { min-height: 40px; margin-top: 5px; }
+.save-destination { padding: 10px 11px; background: #edf2e4; border-left: 2px solid #93a77c; font-size: 11px; color: #5f7751; overflow-wrap: anywhere; }
+.save-title-line { min-height: 32px; }
+.save-title { font-weight: 600; font-size: 13px; color: #435c36; }
+.save-current { color: #526e44; background: #e1ecd5; font-size: 10px; border-radius: 2px; }
+.save-date { color: #839175; font-size: 11px; }
+.save-buttons { gap: 5px; flex-wrap: wrap; }
+.save-buttons button { font-size: 11px; min-height: 31px; padding: 5px 9px; }
+.save-buttons button:first-child { color: #3e6133; border-color: #a6bb94; background: #f2f7e9; }
+.reset-section { border-color: #d9e0d0; }
+.help-details { border-color: #d9e0d0; font-size: 12px; color: #687b59; }
+.help-details p, .help-details summary { font-size: 12px; }
+.help-details summary { color: #4c673d; }
+.shortcut-list { display: grid; gap: 6px; margin: 12px 0 15px; }
+.shortcut-list > span { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 11px; color: #6d7f5d; }
+kbd { font-family: inherit; font-size: 10px; line-height: 1.4; padding: 2px 5px; border: 1px solid #cdd6c3; background: #f5f7ef; border-bottom-width: 2px; border-radius: 2px; color: #5b714d; white-space: nowrap; }
+
+#build-commit-bar { flex-shrink: 0; padding: 15px 18px 14px; border-top: 1px solid #c7d2bb; background: #eef2e5; }
+#build-commit-bar #construction-error { max-height: 90px; overflow: auto; margin: 0 0 10px; padding: 8px 10px; font-size: 11px; }
+.commit-summary { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 0 0 12px; }
+.commit-summary > div { display: flex; flex-direction: column; gap: 5px; }
+#commit-label { color: #7a8d68; font-size: 10px; }
+#commit-cost { font-size: 20px; font-weight: 600; letter-spacing: -.3px; color: #2f4924; font-variant-numeric: tabular-nums; }
+#commit-status { color: #8a967d; font-size: 10px; line-height: 1.5; text-align: right; }
+#commit-status.has-draft { color: #98722c; }
+.commit-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+.commit-actions button { min-height: 40px; font-size: 12px; }
+.commit-actions > button:first-child { color: #7e7e66; background: transparent; border-color: #cbd4bd; }
+.commit-actions > .primary { font-weight: 650; }
+.app-footer { min-height: 36px; padding: 7px 14px; border-color: #dbe3d2; background: #f8faf2; color: #8d9a81; font-size: 10px; }
+#save-indicator { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #859378; }
+#save-indicator:before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #91a87c; }
+#save-indicator[data-state=pending]:before { background: #c3a25b; }
+#save-indicator[data-state=error] { color: #ab5d47; }
+#save-indicator[data-state=error]:before { background: #b85c42; }
+.app-footer .new-game-shortcut { color: #81936f; background: transparent; border-color: transparent; font-size: 10px; }
+.app-footer #help-button { color: #778f63; border-color: #c9d6bc; background: transparent; border-radius: 3px; width: 25px; min-height: 24px; }
+#message { font-size: 12px; border-radius: 2px; color: #45633a; border-color: #bdcdae; background: #edf4e3; box-shadow: none; max-height: 135px; overflow: auto; flex-shrink: 0; margin: 10px 14px 0; padding: 10px; }
+#message.error { color: #9a4e36; background: #fff0e6; border-color: #dfb9a4; }
+#message.info { color: #5b7350; background: #eff3e7; border-color: #cbd9be; }
+.form-error { font-size: 12px; border-radius: 2px; }
+dialog { border-radius: 4px; border-color: #bac9af; background: #fafbf6; color: #32482b; padding: 24px; box-shadow: 0 12px 50px #1729153b; }
+dialog::backdrop { backdrop-filter: none; background: #1f2c25a3; }
+dialog p { color: #718267; font-size: 12px; }
+#station-wiring-dialog, #route-platform-dialog { max-width: 590px; }
+dialog .wiring-table select { min-height: 35px; font-size: 11px; }
+
+.inspector-collapsed#world { grid-template-columns: minmax(0, 1fr) 0; }
+.inspector-collapsed #controls-pane { visibility: hidden; border: 0; }
+@media (min-width: 2000px) { #world { grid-template-columns: minmax(0, 1fr) 392px; } }
+@media (max-width: 1150px) {
+  #world { grid-template-columns: minmax(0, 1fr) 344px; }
+  #game-header { gap: 14px; padding: 0 12px; }
+  .game-brand { font-size: 13px; gap: 6px; }
+  .balance { padding-left: 14px; }
+  .balance strong { font-size: 14px; }
+  .clock-controls { gap: 8px; }
+  .clock-controls time { font-size: 11px; }
+  .clock-buttons button { padding: 4px 6px; }
+  #panel-toggle span { display: none; }
+  #panel-scroll { padding: 15px; }
+  .workbench-header { padding: 16px 16px 13px; }
+  .workbench-header h1 { font-size: 18px; }
+  .map-hint { max-width: calc(100% - 180px); left: calc(50% + 32px); font-size: 11px; padding: 8px 11px; }
+  .main-tabs { left: 10px; width: 56px; }
+  .main-tabs button { height: 54px; min-height: 54px; }
+  .track-legend { left: 78px; }
+}
+@media (max-width: 930px) and (min-width: 741px) {
+  .game-brand span { display: none; }
+  #game-header { gap: 12px; }
+  .balance { padding-left: 12px; }
+  .balance > span:first-child { display: none; }
+  #unlimited-badge { display: none!important; }
+  .clock-controls { gap: 7px; }
+  .clock-buttons button { padding: 4px 5px; }
+  #clock-custom summary { font-size: 10px; }
+  .population-legend { width: 180px; right: 10px; }
+}
+@media (max-width: 740px) {
+  #world { grid-template-columns: minmax(0, 1fr); grid-template-rows: 76px 48px minmax(160px, 1fr) minmax(0, 44dvh); grid-template-areas: "hud" "tools" "map" "controls"; }
+  #game-header { height: 76px; min-height: 76px; padding: 7px 12px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: 24px 31px; gap: 5px 12px; }
+  .game-brand { font-size: 13px; }
+  .game-brand svg { width: 19px; height: 22px; }
+  .balance { border: 0; padding: 0; justify-content: flex-end; width: auto; }
+  .balance > span:first-child { display: none; }
+  .balance strong { font-size: 14px; }
+  .clock-controls { grid-column: 1 / -1; width: auto; margin: 0; gap: 8px; justify-content: flex-start; }
+  .clock-controls time { font-size: 10px; flex-shrink: 0; margin: 0 auto 0 0; }
+  .clock-buttons button { min-height: 28px; font-size: 10px; padding: 4px 6px; }
+  #clock-pause { min-width: 29px; padding: 4px 8px; }
+  #clock-state-label { display: none; }
+  #clock-custom summary { font-size: 10px; }
+  #clock-custom > div { top: 30px; }
+  #panel-toggle { position: absolute; right: 7px; top: 84px; z-index: 16; height: 32px; width: 33px; min-height: 32px; padding: 6px; border-color: #cbd6c1; color: #6b805b; background: #fafbf6; }
+  #panel-toggle span { display: none; }
+  .main-tabs { grid-area: tools; position: static; display: grid; grid-template-columns: repeat(4, 1fr); width: auto; height: 48px; padding: 4px 48px 4px 8px; border: 0; border-bottom: 1px solid #cbd5c0; border-radius: 0; box-shadow: none; background: #f2f5eb; }
+  .main-tabs button { min-height: 39px; height: 39px; flex-direction: row; gap: 6px; padding: 5px; font-size: 12px; }
+  .main-tabs svg { width: 19px; height: 19px; }
+  .main-tabs button.active { box-shadow: inset 0 -2px #698659; }
+  #controls-pane { border-left: 0; border-top: 1px solid #bdcbb0; }
+  .workbench-header { padding: 10px 14px; }
+  .workbench-header > span, .workbench-header p { display: none; }
+  .workbench-header h1 { font-size: 16px; margin: 0; }
+  #panel-scroll { padding: 12px 14px 18px; }
+  .build-modes { margin-bottom: 10px; }
+  .field { margin-bottom: 12px; }
+  #build-commit-bar { padding: 10px 14px; }
+  .commit-summary { margin: 0 0 8px; align-items: center; }
+  .commit-summary > div { flex-direction: row; align-items: center; gap: 9px; }
+  #commit-cost { font-size: 17px; }
+  #commit-label { font-size: 9px; }
+  .commit-actions button { min-height: 36px; }
+  .app-footer { min-height: 29px; height: auto; padding: 3px 12px; }
+  .app-footer .new-game-shortcut { min-height: 23px; padding: 3px 6px; }
+  .track-legend { top: 11px; left: 12px; padding: 6px 8px; font-size: 9px; }
+  .map-coordinates { top: 92px; left: 12px; font-size: 9px; }
+  .population-legend { top: 10px; right: 10px; width: 180px; padding: 8px; }
+  .map-tools { left: 10px; bottom: 24px; gap: 4px; }
+  .layer-toggle, .grade-toggle { width: 39px; height: 46px; min-width: 39px; padding: 5px; }
+  .layer-toggle svg { height: 20px; width: 20px; }
+  .grade-toggle b { line-height: 20px; font-size: 21px; }
+  .layer-toggle span, .grade-toggle span { font-size: 9px; }
+  .layer-menu { bottom: 50px; width: 210px; }
+  .map-hint { bottom: 26px; left: 104px; transform: none; max-width: calc(100% - 115px); max-height: 69px; overflow: auto; font-size: 10px; padding: 6px 9px; }
+  .map-credit { font-size: 6px; max-width: calc(100% - 60px); }
+  .grade-panel { width: min(280px, calc(100% - 30px)); bottom: 77px; right: 10px; }
+  .inspector-collapsed#world { grid-template-columns: minmax(0, 1fr); grid-template-rows: 76px 48px minmax(0, 1fr) 0; }
+  .route-options { grid-template-columns: 1fr 1fr; }
+  .wiring-table select { font-size: 11px; padding: 5px 3px; min-height: 35px; }
+}
+@media (max-height: 650px) and (min-width: 741px) {
+  .workbench-header { padding: 12px 16px; }
+  .workbench-header p { display: none; }
+  .workbench-header h1 { font-size: 17px; }
+  #build-commit-bar { padding: 10px 15px; }
+  .commit-summary { margin-bottom: 8px; }
+  #commit-cost { font-size: 18px; }
+}
+@media (max-width: 740px) and (max-height: 560px) {
+  #world { grid-template-columns: minmax(0, 1fr) 290px; grid-template-rows: 64px minmax(0, 1fr); grid-template-areas: "hud hud" "map controls"; }
+  #game-header { height: 64px; min-height: 64px; grid-template-rows: 22px 28px; padding: 5px 12px; gap: 3px 12px; }
+  .balance { margin-right: 38px; }
+  .main-tabs { position: absolute; display: flex; flex-direction: column; left: 8px; top: 74px; width: 45px; height: auto; padding: 3px; border: 1px solid #bfc9bb; border-radius: 3px; }
+  .main-tabs button { flex-direction: column; gap: 3px; min-height: 44px; height: 44px; font-size: 9px; padding: 4px 2px; }
+  .main-tabs svg { width: 18px; height: 18px; }
+  .track-legend { left: 64px; }
+  #panel-toggle { top: 4px; right: 8px; height: 24px; min-height: 24px; width: 28px; padding: 4px; }
+  #controls-pane { border-top: 0; border-left: 1px solid #bdcbb0; }
+  .inspector-collapsed#world { grid-template-columns: minmax(0, 1fr) 0; grid-template-rows: 64px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { *, *:before, *:after { transition: none!important; } }
